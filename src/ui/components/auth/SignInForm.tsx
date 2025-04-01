@@ -17,7 +17,7 @@ export default function SignInForm() {
   };
 
   const form = useForm({
-    defaultValues: defaultValues,
+    defaultValues,
     resolver: yupResolver(
       yup.object().shape({
         email: yup.string().email().required("This field is required"),
@@ -43,6 +43,8 @@ export default function SignInForm() {
 
       if (response.ok) {
         alert("Login successful");
+        // Almacenar el token recibido en localStorage
+        localStorage.setItem("token", result.user.token);
         window.location.href = "/";
       } else {
         alert(result.message || "Login failed");
