@@ -12,12 +12,19 @@ export default function Home() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Verifica si existe un token en el localStorage
-    const token = localStorage.getItem("token");
-    if (!token) {
-      // Si no hay token, redirige al login
-      navigate("/signin");
-    }
+    // Comprobación periódica cada segundo
+    const checkToken = setInterval(() => {
+      const token = localStorage.getItem("token");
+      const tokenExpiration = localStorage.getItem("token_expiration");
+
+      // Si no hay token o si el token está expirado, redirige al login
+      if (!token || !tokenExpiration || Date.now() / 1000 > Number(tokenExpiration)) {
+        clearInterval(checkToken);
+        navigate("/signin");
+      }
+    }, 1000); // cada 1 segundo
+
+    return () => clearInterval(checkToken);
   }, [navigate]);
 
   return (
@@ -51,3 +58,4 @@ export default function Home() {
     </>
   );
 }
+
