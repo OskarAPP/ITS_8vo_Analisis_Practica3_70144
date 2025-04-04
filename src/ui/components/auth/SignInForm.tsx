@@ -7,62 +7,38 @@ import Button from "../ui/button/Button";
 import { useForm } from "react-hook-form";
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
-
+import { authService } from "../../../core/ports/AuthService";
 
 export default function SignInForm() {
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = React.useState(false);
 
   const defaultValues = {
-    email: "",
-    password: "",
-  }
+      email: "",
+      password: "",
+  };
 
   const form = useForm({
-    defaultValues: defaultValues,
-    resolver: yupResolver(
-      yup.object().shape({
-        email: yup.string().email().required('This field is required'),
-        password: yup.string().min(6).required('This field is required'),
-      })
-    )
-  })
+      defaultValues,
+      resolver: yupResolver(
+          yup.object().shape({
+              email: yup.string().email().required('This field is required'),
+              password: yup.string().min(6).required('This field is required'),
+          })
+      ),
+  });
 
   const handleSubmit = async (data: { email: string; password: string }) => {
-    try {
-      const response = await fetch("http://127.0.0.1:8000/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: data.email,
-          password: data.password,
-        }),
-      });
-  
-      const result = await response.json();
-  
-      if (response.ok) {
-        // Calcular el timestamp de expiración
-        const currentTime = Math.floor(Date.now() / 1000); // tiempo actual en segundos
-        const expirationTimestamp = currentTime + Number(result.user.expires_in);
-  
-        // Guardar token y timestamp de expiración en localStorage
-        localStorage.setItem("token", result.user.token);
-        localStorage.setItem("token_expiration", expirationTimestamp.toString());
-  
-        alert("Login successful");
-        window.location.href = "/";
-      } else {
-        alert(result.message || "Login failed");
+      try {
+          const user = await authService.login(data.email, data.password);
+          if (user) {
+              alert("Login successful");
+              window.location.href = "/";
+          }
+      } catch (error) {
+          alert("An error occurred during login");
       }
-    } catch (error) {
-      console.error("Error during login:", error);
-      alert("An error occurred during login");
-    }
   };
   
-
   return (
     <div className="flex flex-col flex-1">
       <div className="w-full max-w-md pt-10 mx-auto">
@@ -85,46 +61,48 @@ export default function SignInForm() {
             </p>
           </div>
           <div>
-            <form>
-              <div className="space-y-6">
-                <div>
-                  <Label>
-                    Email <span className="text-error-500">*</span>{" "}
-                  </Label>
-                  <Input
-                    placeholder="info@gmail.com"
-                    error={form.formState.errors.email ? true : false}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      form.setValue('email', e.target.value)
-                    }} />
-                </div>
-                <div>
-                  <Label>
-                    Password <span className="text-error-500">*</span>{" "}
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Enter your password"
-                      error={form.formState.errors.password ? true : false}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        form.setValue('password', e.target.value)
-                      }}
-                    />
-                    <span
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
-                    >
-                      {showPassword ? (
-                        <EyeIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
-                      ) : (
-                        <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
-                      )}
-                    </span>
-                  </div>
-                </div>
-                <div>
-                  <Button className="w-full" size="sm" onClick={form.handleSubmit(handleSubmit)}>
+          <form>
+                <div className="space-y-6">
+                    {/* Email Field */}
+                    <div>
+                        <Label>
+                            Email <span className="text-error-500">*</span>{" "}
+                        </Label>
+                        <Input
+                            placeholder="info@gmail.com"
+                            error={form.formState.errors.email ? true : false}
+                            onChange={(e) => form.setValue('email', e.target.value)}
+                        />
+                    </div>
+
+                    {/* Password Field */}
+                    <div>
+                        <Label>
+                            Password <span className="text-error-500">*</span>{" "}
+                        </Label>
+                        <div className="relative">
+                            <Input
+                                type={showPassword ? "text" : "password"}
+                                placeholder="Enter your password"
+                                error={form.formState.errors.password ? true : false}
+                                onChange={(e) => form.setValue('password', e.target.value)}
+                            />
+                            <span
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
+                            >
+                                {showPassword ? (
+                                    <EyeIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
+                                ) : (
+                                    <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400 size-5" />
+                                )}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Submit Button */}
+                    <div>
+                        <Button className="w-full" size="sm" onClick={form.handleSubmit(handleSubmit)}>
                     Sign in
                   </Button>
                 </div>
